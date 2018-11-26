@@ -1,8 +1,10 @@
-#!/homes/dsuveges/anaconda3/bin/python
+#!/usr/bin/env python
+
 
 # load virtual env... just the usual
 import pandas as pd
 import argparse
+import os
 
 # we don't want to get warnings. It works.
 pd.options.mode.chained_assignment = None 
@@ -54,12 +56,24 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    inputFile = args.input
+    # inputFile = args.input
     outputFile = args.output
     window = args.window
 
+    if not outputFile:
+        raise(Exception("[Error] A output file needs to be specified! Exiting."))
+
+    # If inputfile is not specified or not submitted exiting:
+    if args.input and os.path.isfile(args.input):
+        inputFile = args.input
+    else:
+        raise(Exception("[Error] A valid input file is required! Exiting."))
+
     # Reading input file into pandas dataframe:
-    input_df = pd.read_csv(inputFile, sep="\t", dtype = str)
+    try:
+        input_df = pd.read_csv(inputFile, sep="\t", dtype = str)
+    except:
+        raise(Exception("[Error] Input file could not be read. Please provide a tab separated table. Exiting."))
     
     # Checking header:
     if not pd.Series(['RS_ID', 'pvalue', 'chromosome', 'bp_location']).isin(input_df.columns).all():
