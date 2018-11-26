@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-# load virtual env... just the usual
 import pandas as pd
 import argparse
 import os
@@ -13,6 +11,7 @@ pd.options.mode.chained_assignment = None
 def find_top_association(chrom):
     global input_df
     global window
+    global threshold
 
     test_df = input_df.loc[input_df.chromosome == chrom]
     test_df.loc[:,'pvalue'] = test_df['pvalue'].astype(float) # changing type of p-value column
@@ -26,7 +25,7 @@ def find_top_association(chrom):
             test_df.loc[index]['isTopAssociation'] == 'REQUIRES REVIEW':
             continue
         # Excluding sub significant variants.
-        elif test_df.loc[index]['pvalue'] > 1.0e-5:
+        elif test_df.loc[index]['pvalue'] > threshold:
             test_df.loc[index, 'isTopAssociation'] = 'false'
             continue
         # We have found a top snp!
@@ -53,12 +52,14 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--input', help='Input file name with table of associations.')
     parser.add_argument('-o', '--output', help='Output file name.')
     parser.add_argument('-w', '--window', default=100000, help='Window size.', type = int)
+    parser.add_argument('-t', '--threshold', default=1e-5, help='p-value threshold.', type = float)
 
     args = parser.parse_args()
 
     # inputFile = args.input
     outputFile = args.output
     window = args.window
+    threshold = args.threshold
 
     if not outputFile:
         raise(Exception("[Error] A output file needs to be specified! Exiting."))
