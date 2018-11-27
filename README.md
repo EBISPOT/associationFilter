@@ -13,15 +13,16 @@ source ${scriptDir}/.env/bin/activate
 2. Call script:
 
 ```bash
-${scriptDir}/peak_finder.py -f test.input.txt -o test.output.txt -t 1e-2 -w 100000
+${scriptDir}/peak_finder.py -f test.input.txt -o test.output.txt -t 1e-2 -w 100000 -p
 ```
 
 Where:
 
 * **-f**: input table in tsv format. (required)
-* **-o**: output file name in the same format. (required)
+* **-o**: output file name, saved in the same format. (required)
 * **-w**: window size (default 100kb)
 * **-t**: p-value threshold above which association's won't be considered as peaks. (default: `1e-5`)
+* **-p**: turning pruning on: associations below the significance threshold will be removed from the output
 
 ### Input file example:
 
@@ -54,7 +55,9 @@ rs563694    1.60E-13  2           169774071    false
 rs537183    1.50E-13  2           169774646    false
 ```
 
-The output table will contain a column called `isTopAssociation` telling if an association is a top association or not. An association is considered as top associaiton if the p-value is below the threshold (1e-5 by default), and there's no association with lower p-value within the defined window (100kbp by default.) This flag is set to `REQUIRES REVIEW` if two or more associaiton has the same lowest p-value in a region and programatically it is not possible to make a distinction. 
+The output table will contain a column called `isTopAssociation` telling if it is a top association or not. An association is considered as top associaiton if the p-value is below the significance threshold (1e-5 by default), and there's no association with lower p-value within the defined window (100kbp by default.) This flag is set to `REQUIRES REVIEW` if two or more associaiton has the same lowest p-value in a region and programatically it is not possible to make a distinction. And the curators will have to make the call. 
+
+If pruning is turned on with the `-p` switch, the output file won't contain associations below the p-value threshold for increased clearaty. 
 
 ## Requirement
 

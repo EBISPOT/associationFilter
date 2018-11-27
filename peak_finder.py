@@ -53,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', help='Output file name.')
     parser.add_argument('-w', '--window', default=100000, help='Window size.', type = int)
     parser.add_argument('-t', '--threshold', default=1e-5, help='p-value threshold.', type = float)
+    parser.add_argument('-p', '--prune', default=False, help='Prune out sub significant associations from the output.', action='store_true')
 
     args = parser.parse_args()
 
@@ -60,6 +61,7 @@ if __name__ == '__main__':
     outputFile = args.output
     window = args.window
     threshold = args.threshold
+    prune = args.prune
 
     if not outputFile:
         raise(Exception("[Error] A output file needs to be specified! Exiting."))
@@ -79,6 +81,9 @@ if __name__ == '__main__':
     # Checking header:
     if not pd.Series(['RS_ID', 'pvalue', 'chromosome', 'bp_location']).isin(input_df.columns).all():
         raise Exception('[Error] Not all required columns were found in the file header. Required columns: "RS_ID", "pvalue", "chromosome", "bp_location"')
+
+    if prune:
+        input_df = input_df[ input_df.pvalue.astype(float) < threshold ]
 
     input_df['isTopAssociation'] = ''
 
