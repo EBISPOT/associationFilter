@@ -3,9 +3,21 @@
 import pandas as pd
 import argparse
 import os
+import math
 
 # we don't want to get warnings. It works.
 pd.options.mode.chained_assignment = None 
+
+# Function to calculate -log10(x) without handling x as a float:
+def get_log(pv):
+    if 'E' in pv.upper():
+        mantissa, exponent = pv.upper().split('E')
+        if float(mantissa) == 0:
+            return(0)
+        else:
+            return(math.log10(float(mantissa))+float(exponent))
+    else:
+        return(math.log10(float(pv)))
 
 # Function to find and annotate top association:
 def find_top_association(chrom):
@@ -14,20 +26,23 @@ def find_top_association(chrom):
     global threshold
 
     test_df = input_df.loc[input_df.chromosome == chrom]
-    test_df.loc[:,'pvalue'] = test_df['pvalue'].astype(float) # changing type of p-value column
+    # test_df.loc[:,'pvalue'] = test_df['pvalue'].astype(float) # changing type of p-value column <- too dangerous. Underflow hazard.
+    test_df['mLogPv'] = test_df.pvalue.apply(get_log)
     test_df.loc[:,'bp_location'] = test_df['bp_location'].astype(float) # changing type of position column
 
     # sorting rows by p-value:
-    for index in test_df.sort_values(['pvalue']).index:
+    for index in test_df.sort_values(['mLogPv']).index:
         
         # Check if the index has 'false' or 'review' flag:
         if test_df.loc[index]['isTopAssociation'] == 'false' or \
             test_df.loc[index]['isTopAssociation'] == 'REQUIRES REVIEW':
             continue
+
         # Excluding sub significant variants.
-        elif test_df.loc[index]['pvalue'] > threshold:
+        elif test_df.loc[index]['mLogPv'] > threshold:
             test_df.loc[index, 'isTopAssociation'] = 'false'
             continue
+
         # We have found a top snp!
         else:
             pos = test_df.loc[index]['bp_location']
@@ -35,10 +50,10 @@ def find_top_association(chrom):
             test_df.loc[test_df[abs( test_df.bp_location - pos ) <= window].index,'isTopAssociation'] = 'false'
             
             # If there are multiple variants with the same p-value, request review, othervise it's a true peak.
-            if len(test_df.loc[test_df['pvalue'] == test_df.loc[index]['pvalue']].chromosome) > 1:
-                test_df.loc[ test_df['pvalue'] == test_df.loc[index]['pvalue'], 'isTopAssociation'] = 'REQUIRES REVIEW'
+            if len(test_df.loc[test_df['mLogPv'] == test_df.loc[index]['mLogPv']].chromosome) > 1:
+                test_df.loc[ test_df['mLogPv'] == test_df.loc[index]['mLogPv'], 'isTopAssociation'] = 'REQUIRES REVIEW'
             else:
-                test_df.loc[ test_df['pvalue'] == test_df.loc[index]['pvalue'], 'isTopAssociation'] = 'true'
+                test_df.loc[ test_df['mLogPv'] == test_df.loc[index]['mLogPv'], 'isTopAssociation'] = 'true'
 
     # Modifying the original dataframe: 
     input_df.loc[ test_df.index, 'isTopAssociation'] = test_df.isTopAssociation
@@ -60,7 +75,7 @@ if __name__ == '__main__':
     # inputFile = args.input
     outputFile = args.output
     window = args.window
-    threshold = args.threshold
+    threshold = math.log10(args.threshold)
     prune = args.prune
 
     if not outputFile:
@@ -78,12 +93,13 @@ if __name__ == '__main__':
     except:
         raise(Exception("[Error] Input file could not be read. Please provide a tab separated table. Exiting."))
     
-    # Checking header:
-    if not pd.Series(['RS_ID', 'pvalue', 'chromosome', 'bp_location']).isin(input_df.columns).all():
-        raise Exception('[Error] Not all required columns were found in the file header. Required columns: "RS_ID", "pvalue", "chromosome", "bp_location"')
+    # Checking header (setting lowercase):
+    input_df.columns = map(str.lower, input_df.columns)
+    if not pd.Series(['rs_id', 'pvalue', 'chromosome', 'bp_location']).isin(input_df.columns).all():
+        raise Exception('[Error] Not all required columns were found in the file header. Required columns: "rs_id", "pvalue", "chromosome", "bp_location"')
 
     if prune:
-        input_df = input_df[ input_df.pvalue.astype(float) < threshold ]
+        input_df = input_df[ input_df.mLogPv < threshold ]
 
     input_df['isTopAssociation'] = ''
 
@@ -92,4 +108,5 @@ if __name__ == '__main__':
         find_top_association(chromosme)
 
     # Saving the modified table into a tab separated file:
+    # input_df.drop(["mLogPv"], inplace=True)
     input_df.to_csv(outputFile, sep="\t", index= False)
