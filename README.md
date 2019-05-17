@@ -55,7 +55,7 @@ rs563694    1.60E-13  2           169774071    false
 rs537183    1.50E-13  2           169774646    false
 ```
 
-The output table will contain a column called `isTopAssociation` telling if it is a top association or not. An association is considered as top associaiton if the p-value is below the significance threshold (1e-5 by default), and there's no association with lower p-value within the defined window (100kbp by default.) This flag is set to `REQUIRES REVIEW` if two or more associaiton has the same lowest p-value in a region and programatically it is not possible to make a distinction. And the curators will have to make the call. 
+The output table will contain a column called `isTopAssociation` telling if it is a top association or not. An association is considered as top associaiton if the p-value is below the significance threshold (1e-5 by default), and there's no association with lower p-value within the defined window (100kbp by default.) This flag is set to `REQUIRES REVIEW` if two or more associaiton has the same lowest p-value in a region and programatically it is not possible to make a distinction. And the curators will have to make the call. The script handles very low p-values below 1e-308 with avoiding underflow error. 
 
 If pruning is turned on with the `-p` switch, the output file won't contain associations below the p-value threshold for increased clearaty. 
 

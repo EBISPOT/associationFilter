@@ -109,4 +109,4 @@ if __name__ == '__main__':
 
     # Saving the modified table into a tab separated file:
     # input_df.drop(["mLogPv"], inplace=True)
-    input_df.to_csv(outputFile, sep="\t", index= False)
+    input_df.to_csv(outputFile, sep="\t", index= False, na_rep = 'NA')
