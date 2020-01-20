@@ -25,12 +25,12 @@ def find_top_association(chrom):
     global window
     global threshold
 
+    # The dataframe is filtered by chromosome:
     test_df = input_df.loc[input_df.chromosome == chrom]
-    print(chrom)
-    # print(test_df)
 
+    # Calculate the -log(pv) and update column type of the position:
     test_df['mLogPv'] = test_df.pvalue.apply(get_log)
-    test_df.loc[:,'bp_location'] = test_df['bp_location'].astype(float) # changing type of position column
+    test_df.loc[:,'bp_location'] = test_df['bp_location'].astype(float)
 
     # sorting rows by p-value:
     for index in test_df.sort_values(['mLogPv']).index:
